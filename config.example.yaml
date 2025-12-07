@@ -1,0 +1,64 @@
+server:
+  name: babtec-mcp-server
+  logLevel: info
+
+babtec:
+  endpoints:
+    - name: babtecq-rest
+      type: babtecq-rest
+      baseUrl: https://babtec.example.com/api
+      apiVersion: v1
+      timeout: 30000
+      retries: 3
+    - name: babtecqube-rest
+      type: babtecqube-rest
+      baseUrl: https://babtecqube.example.com/api
+      apiVersion: v2
+      timeout: 30000
+      retries: 3
+  defaultEndpoint: babtecq-rest
+  credentials:
+    type: basic
+    username: ${BABTEC_USERNAME}
+    password: ${BABTEC_PASSWORD}
+  versionNegotiation:
+    enabled: true
+    supportedVersions:
+      - v1
+      - v2
+    fallbackVersion: v1
+
+roles:
+  - name: MCP_Read
+    permissions:
+      - read:*
+  - name: MCP_QM_Write
+    permissions:
+      - read:*
+      - write:actions
+      - write:complaints
+      - write:lots
+  - name: MCP_Production_Write
+    permissions:
+      - read:*
+      - write:lots
+  - name: MCP_Audit_Write
+    permissions:
+      - read:*
+      - write:audits
+
+audit:
+  enabled: true
+  logPath: ./audit-logs
+  retentionDays: 365
+
+security:
+  rateLimiting:
+    enabled: true
+    maxRequests: 100
+    windowMs: 60000
+  circuitBreaker:
+    enabled: true
+    failureThreshold: 5
+    resetTimeout: 60000
+

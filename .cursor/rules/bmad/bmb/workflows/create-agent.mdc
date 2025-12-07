@@ -1,0 +1,98 @@
+---
+description: BMAD BMB Workflow: create-agent
+globs:
+alwaysApply: false
+---
+
+You must fully embody this workflow's instructions and follow all activation steps exactly as specified.
+
+<workflow-activation CRITICAL="TRUE">
+1. LOAD the FULL workflow file from @.bmad/bmb/workflows/create-agent/workflow.md
+2. READ its entire contents - this contains the complete workflow instructions
+3. Execute ALL activation steps exactly as written in the workflow file
+4. Follow the step-file architecture precisely
+5. Load steps sequentially, one at a time
+</workflow-activation>
+
+# BMAD BMB Workflow: Create Agent
+
+## Workflow Description
+
+This workflow guides you through creating a new BMAD Core compliant agent using the step-file architecture. The workflow supports three agent types: Simple, Expert, and Module agents.
+
+## Workflow Reference
+
+**Primary Workflow Location**: `.bmad/bmb/workflows/create-agent/workflow.md`
+
+**Workflow Type**: Step-file architecture with sequential execution
+
+**Agent Types Supported**:
+- **Simple Agent**: Self-contained, stateless, single YAML file
+- **Expert Agent**: Persistent memory, sidecar resources, domain-specific
+- **Module Agent**: Team integration, workflow coordination, enterprise-grade
+
+## How to Use
+
+### Via bmad-builder Agent
+
+1. **Activate bmad-builder agent**:
+   ```
+   /bmad/bmb/agents/bmad-builder
+   ```
+
+2. **Select menu option**:
+   - `[CA]` Create Agent
+
+3. **Follow interactive prompts** through the 11-step process
+
+### Direct Workflow Execution
+
+The workflow uses step-file architecture:
+
+1. **Load configuration**: Read `.bmad/bmb/config.yaml`
+2. **Execute Step 1**: Load and execute `steps/step-01-brainstorm.md`
+3. **Continue sequentially**: Each step loads the next step file
+4. **Wait for user input**: Halt at menus and wait for 'C' (Continue)
+
+## Workflow Steps
+
+The workflow consists of 11 steps (some conditional based on agent type):
+
+1. **Brainstorm** - Discover agent purpose and concept
+2. **Persona Development** - Shape agent personality and communication style
+3. **Command Structure** - Design menu and command system
+4. **Capabilities Definition** - Define what the agent can do
+5. **Agent Type Selection** - Choose Simple/Expert/Module architecture
+6. **YAML Generation** - Create agent configuration file
+7. **Supporting Files** - Generate sidecar files (if needed)
+8. **Validation** - Quality check and validation
+9. **Documentation** - Create installation and usage guides
+10. **Testing** - Test agent functionality
+11. **Deployment** - Finalize and deploy agent
+
+## Critical Rules
+
+- 🛑 **NEVER** load multiple step files simultaneously
+- 📖 **ALWAYS** read entire step file before execution
+- 🚫 **NEVER** skip steps unless explicitly optional
+- 💾 **ALWAYS** save progress and outputs
+- 🎯 **ALWAYS** follow exact instructions in step files
+- ⏸️ **ALWAYS** halt at menus and wait for input
+- 📋 **NEVER** pre-load future steps
+
+## Output Locations
+
+- **Custom Agents**: `.bmad/custom/src/agents/{agent_name}/`
+- **Module Agents**: `.bmad/{module}/agents/{agent_name}.agent.yaml`
+- **Configuration**: `.bmad/_cfg/agents/{module}-{agent_name}.customize.yaml`
+
+## Related Documentation
+
+- Agent Compilation: `.bmad/bmb/docs/agents/agent-compilation.md`
+- Understanding Agent Types: `.bmad/bmb/docs/agents/understanding-agent-types.md`
+- Agent Architecture Guides: Simple/Expert/Module architecture docs
+- Menu Patterns: `.bmad/bmb/docs/agents/agent-menu-patterns.md`
+
+---
+
+**Remember**: This workflow uses step-file architecture. Always load and execute steps sequentially, one at a time, following the exact instructions in each step file.
