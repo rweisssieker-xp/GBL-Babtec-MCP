@@ -20,43 +20,41 @@
 
 ## Introduction
 
-The Babtec MCP Server provides a Model Context Protocol (MCP) interface to interact with Babtec quality management systems. This server enables AI assistants and automation tools to read and write quality data, manage inspection processes, handle complaints, and track quality actions.
+The Babtec MCP Server provides a standardized interface for AI assistants and LLM clients to interact with Babtec quality management systems. This manual explains how to use all available MCP tools to read and write quality data.
 
 ### What is MCP?
 
-Model Context Protocol (MCP) is a standardized protocol that allows AI assistants to interact with external systems through tools. Each tool represents a specific operation you can perform on the Babtec system.
+Model Context Protocol (MCP) is a protocol that enables AI assistants to securely access and interact with external systems. The Babtec MCP Server exposes 18 tools that cover inspection plans, lots, complaints, actions, and audits.
 
 ### Key Features
 
-- **18 MCP Tools** covering all major quality management operations
-- **Read and Write Operations** for inspection plans, lots, complaints, actions, and audits
-- **Role-Based Access Control** ensuring secure access to sensitive operations
-- **Audit Logging** for compliance with ISO 9001 and IATF 16949
-- **Automatic Retry Logic** for reliable operations
-- **Health Monitoring** to track system status
+- **Read Operations**: Search and retrieve quality data
+- **Write Operations**: Create and update quality records
+- **Role-Based Access**: Permissions control what you can do
+- **Audit Logging**: All operations are logged for compliance
+- **Error Handling**: Clear error messages and retry logic
 
 ## Getting Started
 
 ### Prerequisites
 
-- Access to a Babtec quality management system (BabtecQ or BabtecQube)
-- Valid credentials (username/password or API token)
-- MCP-compatible client (Claude Desktop, Cursor, or custom MCP client)
+- Access to a Babtec quality management system
+- MCP client configured to connect to the server
+- Appropriate user roles assigned
 
-### Basic Concepts
+### Connecting to the Server
 
-**Tools:** Each MCP tool represents a specific operation. Tools have names like `babtec_search_testplan` or `babtec_create_action`.
+Your MCP client handles the connection. Once connected, you can call any of the available tools. The server automatically handles authentication and authorization based on your user context.
 
-**Permissions:** Your access to tools depends on your assigned roles:
-- `MCP_Read`: Read-only access to all data
-- `MCP_QM_Write`: Read access + write access to actions and complaints
-- `MCP_Production_Write`: Read access + write access to inspection lots
-- `MCP_Audit_Write`: Read access + write access to audit findings
-- `MCP_Admin`: Full access including audit log queries
+### Understanding Permissions
 
-**Operations:**
-- **Read Operations:** Retrieve data without modifying the system
-- **Write Operations:** Create, update, or modify data (requires appropriate permissions)
+Each tool requires specific permissions:
+
+- **Read permissions**: `read:testplans`, `read:lots`, `read:complaints`, `read:actions`, `read:audits`
+- **Write permissions**: `write:actions`, `write:complaints`, `write:lots`, `write:audits`
+- **Admin permissions**: `read:audit` (for audit log queries)
+
+If you don't have the required permission, the tool returns an authorization error.
 
 ## MCP Tools Overview
 
@@ -64,12 +62,12 @@ The server provides 18 tools organized into categories:
 
 ### Inspection Plans (2 tools)
 - `babtec_search_testplan` - Search for inspection plans
-- `babtec_get_testplan` - Get detailed inspection plan
+- `babtec_get_testplan` - Get inspection plan details
 
 ### Inspection Lots (3 tools)
 - `babtec_search_lot` - Search for inspection lots
 - `babtec_get_lot_results` - Get inspection results
-- `babtec_set_lot_status` - Update lot status (Write)
+- `babtec_set_lot_status` - Set lot status (Write)
 
 ### Complaints/8D (4 tools)
 - `babtec_search_claim` - Search for complaints
@@ -78,10 +76,10 @@ The server provides 18 tools organized into categories:
 - `babtec_add_claim_document` - Attach document (Write)
 
 ### Quality Actions (4 tools)
-- `babtec_create_action` - Create new action (Write)
+- `babtec_create_action` - Create action (Write)
 - `babtec_update_action` - Update action (Write)
 - `babtec_close_action` - Close action (Write)
-- `babtec_get_action_list` - List actions with filters
+- `babtec_get_action_list` - List actions
 
 ### Audits (3 tools)
 - `babtec_create_audit_finding` - Create finding (Write)
@@ -89,22 +87,21 @@ The server provides 18 tools organized into categories:
 - `babtec_get_audit_status` - Get audit status
 
 ### System Tools (2 tools)
-- `babtec_health_check` - Check system health
-- `babtec_query_audit_logs` - Query audit logs (Admin only)
+- `babtec_health_check` - Check server health
+- `babtec_query_audit_logs` - Query audit logs (Admin)
 
 ## Inspection Plans
 
-Inspection plans (Prüfpläne) define what characteristics need to be inspected for a part.
+Inspection plans (Prüfpläne) define what characteristics to measure and their specifications.
 
-### Searching for Inspection Plans
+### Search Inspection Plans
 
 Use `babtec_search_testplan` to find inspection plans:
 
-**Example Request:**
 ```json
 {
   "query": "bearing",
-  "partNumber": "BEAR-12345",
+  "partNumber": "BEAR-001",
   "status": "active",
   "limit": 20,
   "offset": 0
@@ -112,10 +109,10 @@ Use `babtec_search_testplan` to find inspection plans:
 ```
 
 **Parameters:**
-- `query` (optional): Text search across plan names and descriptions
-- `partNumber` (optional): Filter by specific part number
-- `status` (optional): Filter by status (`active`, `inactive`, `draft`)
-- `limit` (optional): Maximum results (1-100, default: 20)
+- `query` (optional): Search text
+- `partNumber` (optional): Filter by part number
+- `status` (optional): `active`, `inactive`, or `draft`
+- `limit` (optional): Max results (1-100, default: 20)
 - `offset` (optional): Pagination offset (default: 0)
 
 **Response:**
@@ -124,8 +121,8 @@ Use `babtec_search_testplan` to find inspection plans:
   "items": [
     {
       "id": "TP-001",
+      "partNumber": "BEAR-001",
       "name": "Bearing Inspection Plan",
-      "partNumber": "BEAR-12345",
       "status": "active",
       "version": "1.0"
     }
@@ -136,11 +133,10 @@ Use `babtec_search_testplan` to find inspection plans:
 }
 ```
 
-### Getting Inspection Plan Details
+### Get Inspection Plan Details
 
 Use `babtec_get_testplan` to retrieve complete plan information:
 
-**Example Request:**
 ```json
 {
   "testplanId": "TP-001"
@@ -149,155 +145,135 @@ Use `babtec_get_testplan` to retrieve complete plan information:
 
 **Response includes:**
 - Plan metadata (name, version, status)
-- All characteristics to be inspected
-- Measurement specifications
-- Tolerance ranges
-- Sampling rules
+- All characteristics with specifications
+- Measurement methods
+- Tolerance values
+- Sampling plans
 
 ## Inspection Lots
 
 Inspection lots (Prüflose) represent batches of parts being inspected.
 
-### Searching for Lots
+### Search Inspection Lots
 
-Use `babtec_search_lot` to find inspection lots:
+Use `babtec_search_lot` to find lots:
 
-**Example Request:**
 ```json
 {
   "lotNumber": "LOT-2025-001",
-  "partNumber": "BEAR-12345",
+  "partNumber": "BEAR-001",
   "status": "completed",
   "dateFrom": "2025-01-01T00:00:00Z",
   "dateTo": "2025-01-31T23:59:59Z",
-  "limit": 20
+  "limit": 20,
+  "offset": 0
 }
 ```
 
-**Parameters:**
-- `lotNumber` (optional): Specific lot number
-- `partNumber` (optional): Filter by part number
-- `status` (optional): `pending`, `in-progress`, `completed`, `rejected`
-- `dateFrom` (optional): Start date (ISO 8601)
-- `dateTo` (optional): End date (ISO 8601)
-- `limit` (optional): Max results (1-100)
-- `offset` (optional): Pagination offset
+**Status values:** `pending`, `in-progress`, `completed`, `rejected`
 
-### Getting Inspection Results
+### Get Inspection Results
 
 Use `babtec_get_lot_results` to retrieve all measurements:
 
-**Example Request:**
 ```json
 {
-  "lotId": "LOT-2025-001"
+  "lotId": "LOT-001"
 }
 ```
 
 **Response includes:**
-- All measured values
+- Lot metadata
+- All measurements per characteristic
 - Tolerance violations
-- Pass/fail status per characteristic
+- Pass/fail status
 - Statistical data
 
-### Updating Lot Status
+### Set Lot Status
 
-Use `babtec_set_lot_status` to change lot status (requires `MCP_Production_Write` role):
+Use `babtec_set_lot_status` to update lot status (requires `write:lots` permission):
 
-**Example Request:**
 ```json
 {
-  "lotId": "LOT-2025-001",
+  "lotId": "LOT-001",
   "status": "completed",
-  "comment": "All inspections passed"
+  "comment": "All measurements within tolerance"
 }
 ```
 
-**Status Values:**
-- `pending`: Lot created but not yet inspected
-- `in-progress`: Inspection currently in progress
-- `completed`: Inspection finished successfully
-- `rejected`: Lot failed inspection
+**Important:** Status changes are audit-logged and cannot be undone without proper authorization.
 
 ## Complaints and 8D Process
 
-Complaints (Reklamationen) are managed through the 8D problem-solving process.
+Complaints (Reklamationen) follow the 8D problem-solving process.
 
-### Searching for Complaints
+### Search Complaints
 
 Use `babtec_search_claim` to find complaints:
 
-**Example Request:**
 ```json
 {
-  "claimNumber": "CLAIM-2025-001",
+  "claimNumber": "CLAIM-001",
   "supplier": "Supplier ABC",
-  "status": "open",
-  "dateFrom": "2025-01-01T00:00:00Z"
+  "status": "in-progress",
+  "dateFrom": "2025-01-01T00:00:00Z",
+  "dateTo": "2025-01-31T23:59:59Z"
 }
 ```
 
-**Parameters:**
-- `claimNumber` (optional): Specific claim number
-- `supplier` (optional): Filter by supplier name
-- `status` (optional): `open`, `in-progress`, `closed`, `escalated`
-- `dateFrom` / `dateTo` (optional): Date range filter
-- `limit` / `offset` (optional): Pagination
+**Status values:** `open`, `in-progress`, `closed`, `escalated`
 
-### Getting Complaint Details
+### Get Complaint Details
 
 Use `babtec_get_claim` to retrieve complete complaint information:
 
-**Example Request:**
 ```json
 {
-  "claimId": "CLAIM-2025-001"
+  "claimId": "CLAIM-001"
 }
 ```
 
 **Response includes:**
 - Complaint metadata
-- 8D step status (D1 through D8)
+- 8D step status (D1-D8)
+- Current step details
 - Related documents
-- Action items
 - Timeline
 
-### Updating 8D Steps
+### Update 8D Step
 
-The 8D process consists of 8 steps:
-- **D1:** Team Formation
-- **D2:** Problem Description
-- **D3:** Interim Containment Actions
-- **D4:** Root Cause Analysis
-- **D5:** Permanent Corrective Actions
-- **D6:** Implementation and Validation
-- **D7:** Prevention
-- **D8:** Team Recognition
+Use `babtec_update_claim_step` to update a specific 8D step (requires `write:complaints` permission):
 
-Use `babtec_update_claim_step` to update a step (requires `MCP_QM_Write` role):
-
-**Example Request:**
 ```json
 {
-  "claimId": "CLAIM-2025-001",
-  "step": "D4",
+  "claimId": "CLAIM-001",
+  "step": "D3",
   "data": {
-    "rootCause": "Material defect in batch XYZ",
-    "analysisMethod": "5-Why Analysis",
-    "findings": "Supplier used incorrect material specification"
+    "rootCause": "Material hardness below specification",
+    "analysis": "Metallurgical analysis confirmed...",
+    "responsible": "John Doe"
   }
 }
 ```
 
-### Attaching Documents
+**8D Steps:**
+- `D1`: Team formation
+- `D2`: Problem description
+- `D3`: Containment actions
+- `D4`: Root cause analysis
+- `D5`: Corrective actions
+- `D6`: Implementation
+- `D7`: Prevention
+- `D8`: Closure
 
-Use `babtec_add_claim_document` to attach files (requires `MCP_QM_Write` role):
+### Attach Document
 
-**Example Request:**
+Use `babtec_add_claim_document` to attach files (requires `write:complaints` permission):
+
 ```json
 {
-  "claimId": "CLAIM-2025-001",
-  "documentName": "Root Cause Analysis Report",
+  "claimId": "CLAIM-001",
+  "documentName": "Analysis Report.pdf",
   "documentType": "report",
   "documentContent": "base64-encoded-content",
   "mimeType": "application/pdf"
@@ -306,137 +282,124 @@ Use `babtec_add_claim_document` to attach files (requires `MCP_QM_Write` role):
 
 ## Quality Actions
 
-Quality actions track tasks that need to be completed to address quality issues.
+Quality actions track tasks and improvements in the quality management system.
 
-### Creating Actions
+### Create Action
 
-Use `babtec_create_action` to create a new action (requires `MCP_QM_Write` role):
+Use `babtec_create_action` to create a new action (requires `write:actions` permission):
 
-**Example Request:**
 ```json
 {
-  "title": "Review material specification",
-  "description": "Verify material spec matches supplier requirements",
+  "title": "Review supplier quality process",
+  "description": "Conduct audit of Supplier ABC quality processes",
   "priority": "high",
   "assignee": "user-123",
   "dueDate": "2025-02-15T00:00:00Z",
   "relatedEntityType": "complaint",
-  "relatedEntityId": "CLAIM-2025-001"
+  "relatedEntityId": "CLAIM-001"
 }
 ```
 
-**Priority Levels:**
-- `low`: Low priority, can be scheduled later
-- `medium`: Normal priority (default)
-- `high`: Urgent, should be addressed soon
-- `critical`: Immediate attention required
+**Priority values:** `low`, `medium`, `high`, `critical`
 
-### Updating Actions
+### Update Action
 
-Use `babtec_update_action` to modify an action:
+Use `babtec_update_action` to modify an action (requires `write:actions` permission):
 
-**Example Request:**
 ```json
 {
   "actionId": "ACT-001",
   "status": "in-progress",
-  "description": "Updated description with progress notes"
+  "description": "Updated description",
+  "priority": "critical"
 }
 ```
 
-**Status Values:**
-- `open`: Action created but not started
-- `in-progress`: Work in progress
-- `completed`: Action finished
-- `cancelled`: Action cancelled
+**Status values:** `open`, `in-progress`, `completed`, `cancelled`
 
-### Closing Actions
+### Close Action
 
-Use `babtec_close_action` to mark an action as completed:
+Use `babtec_close_action` to close an action (requires `write:actions` permission):
 
-**Example Request:**
 ```json
 {
   "actionId": "ACT-001",
-  "resolution": "Material specification verified and updated"
+  "resolution": "Action completed successfully. Supplier audit conducted."
 }
 ```
 
-### Listing Actions
+**Note:** Closed actions cannot be reopened. Create a new action if follow-up is needed.
+
+### List Actions
 
 Use `babtec_get_action_list` to search for actions:
 
-**Example Request:**
 ```json
 {
   "status": "open",
   "assignee": "user-123",
   "priority": "high",
-  "limit": 50
+  "limit": 50,
+  "offset": 0
 }
 ```
 
 ## Audits
 
-Audits track quality system compliance and findings.
+Audit findings track non-conformances and improvement opportunities.
 
-### Creating Audit Findings
+### Create Audit Finding
 
-Use `babtec_create_audit_finding` to record a finding (requires `MCP_Audit_Write` role):
+Use `babtec_create_audit_finding` to create a finding (requires `write:audits` permission):
 
-**Example Request:**
 ```json
 {
-  "auditId": "AUDIT-2025-001",
-  "finding": "Missing calibration records",
+  "auditId": "AUDIT-001",
+  "finding": "Missing calibration records for measuring equipment",
   "severity": "major",
-  "description": "Three measurement devices lack current calibration certificates",
-  "evidence": "Device IDs: DEV-001, DEV-002, DEV-003"
+  "description": "Three measuring devices lack current calibration certificates",
+  "evidence": "Equipment inventory dated 2025-01-15"
 }
 ```
 
-**Severity Levels:**
-- `minor`: Small issue, low impact
-- `major`: Significant issue requiring attention
-- `critical`: Serious compliance issue
+**Severity values:** `minor`, `major`, `critical`
 
-### Updating Findings
+### Update Audit Finding
 
-Use `babtec_update_audit_finding` to update finding status:
+Use `babtec_update_audit_finding` to update a finding (requires `write:audits` permission):
 
-**Example Request:**
 ```json
 {
   "findingId": "FIND-001",
   "status": "resolved",
-  "description": "Calibration certificates obtained and verified"
+  "description": "Updated with corrective action details"
 }
 ```
 
-**Status Values:**
-- `open`: Finding identified
-- `in-progress`: Corrective action in progress
-- `resolved`: Issue resolved
-- `closed`: Finding closed after verification
+**Status values:** `open`, `in-progress`, `resolved`, `closed`
 
-### Getting Audit Status
+### Get Audit Status
 
 Use `babtec_get_audit_status` to retrieve audit information:
 
-**Example Request:**
 ```json
 {
-  "auditId": "AUDIT-2025-001"
+  "auditId": "AUDIT-001"
 }
 ```
+
+**Response includes:**
+- Audit metadata
+- All findings with status
+- Overall audit status
+- Timeline
 
 ## System Tools
 
 ### Health Check
 
-Use `babtec_health_check` to monitor system status:
+Use `babtec_health_check` to check server and connection status:
 
-**Example Request:**
 ```json
 {}
 ```
@@ -472,16 +435,15 @@ Use `babtec_health_check` to monitor system status:
 }
 ```
 
-**Status Values:**
+**Status values:**
 - `healthy`: All systems operational
-- `degraded`: Some systems have issues but core functionality works
+- `degraded`: Some systems have issues but server is functional
 - `unhealthy`: Critical systems unavailable
 
 ### Query Audit Logs
 
-Use `babtec_query_audit_logs` to search audit logs (requires `MCP_Admin` role):
+Use `babtec_query_audit_logs` to search audit logs (requires `read:audit` permission):
 
-**Example Request:**
 ```json
 {
   "startDate": "2025-01-01T00:00:00Z",
@@ -489,135 +451,117 @@ Use `babtec_query_audit_logs` to search audit logs (requires `MCP_Admin` role):
   "userId": "user-123",
   "tool": "babtec_create_action",
   "operation": "write",
-  "limit": 100
+  "entityType": "action",
+  "limit": 100,
+  "offset": 0
 }
 ```
 
 ## Common Workflows
 
-### Workflow 1: Inspecting a New Lot
+### Workflow 1: Process Inspection Lot
 
-1. Search for the inspection plan: `babtec_search_testplan` with part number
-2. Get plan details: `babtec_get_testplan` to see required characteristics
-3. Create lot in Babtec (via Babtec UI or API)
-4. Search for lot: `babtec_search_lot` to find the new lot
-5. Perform inspections (via Babtec UI or measurement equipment)
-6. Get results: `babtec_get_lot_results` to review measurements
-7. Update status: `babtec_set_lot_status` to mark as completed
+1. Search for lot: `babtec_search_lot`
+2. Get results: `babtec_get_lot_results`
+3. Review measurements
+4. Set status: `babtec_set_lot_status` (if authorized)
 
-### Workflow 2: Handling a Complaint
+### Workflow 2: Handle Complaint
 
-1. Search for complaint: `babtec_search_claim` to find the complaint
-2. Get details: `babtec_get_claim` to see current 8D status
-3. Update D2 (Problem Description): `babtec_update_claim_step`
-4. Create actions: `babtec_create_action` for each required task
-5. Update D4 (Root Cause): `babtec_update_claim_step` with analysis
-6. Attach documents: `babtec_add_claim_document` for evidence
-7. Track actions: `babtec_get_action_list` to monitor progress
-8. Update D6 (Implementation): `babtec_update_claim_step` when actions complete
+1. Search complaint: `babtec_search_claim`
+2. Get details: `babtec_get_claim`
+3. Update 8D step: `babtec_update_claim_step`
+4. Attach documents: `babtec_add_claim_document` (as needed)
+5. Create related actions: `babtec_create_action`
 
-### Workflow 3: Conducting an Audit
+### Workflow 3: Manage Quality Actions
 
-1. Create findings: `babtec_create_audit_finding` for each issue found
-2. Get audit status: `babtec_get_audit_status` to review all findings
-3. Create actions: `babtec_create_action` for each corrective action
-4. Update findings: `babtec_update_audit_finding` as actions progress
-5. Close findings: `babtec_update_audit_finding` with status "resolved"
+1. List open actions: `babtec_get_action_list`
+2. Update progress: `babtec_update_action`
+3. Close when complete: `babtec_close_action`
+
+### Workflow 4: Conduct Audit
+
+1. Create findings: `babtec_create_audit_finding`
+2. Track resolution: `babtec_update_audit_finding`
+3. Monitor status: `babtec_get_audit_status`
 
 ## Error Handling
 
-### Common Error Codes
+### Error Types
 
-**VALIDATION_ERROR (400)**
-- Input data doesn't match required format
-- Missing required fields
-- Invalid enum values
+**Validation Errors:**
+- Missing required parameters
+- Invalid parameter values
+- Format errors (dates, IDs)
 
-**AUTHENTICATION_ERROR (401)**
-- Invalid credentials
-- Token expired
-- Solution: Check credentials or refresh token
+**Authorization Errors:**
+- Insufficient permissions
+- Role not assigned
 
-**AUTHORIZATION_ERROR (403)**
-- Insufficient permissions for operation
-- Solution: Request appropriate role from administrator
+**Not Found Errors:**
+- Entity doesn't exist
+- Invalid ID
 
-**NOT_FOUND (404)**
-- Requested resource doesn't exist
-- Invalid ID provided
-- Solution: Verify ID and try search operation first
+**API Errors:**
+- Babtec API unavailable
+- Network issues
+- Timeout
 
-**BABTEC_API_ERROR (500+)**
-- Error from Babtec system
-- Check error details for specific issue
-- Solution: Verify Babtec system status
+### Error Response Format
 
-**RATE_LIMIT_ERROR (429)**
-- Too many requests in time window
-- Solution: Wait before retrying (check `retryAfter` in response)
+```json
+{
+  "error": {
+    "code": "AUTHORIZATION_ERROR",
+    "message": "Missing required permission: write:actions"
+  }
+}
+```
+
+### Retry Logic
+
+The server automatically retries failed API calls with exponential backoff. You don't need to implement retry logic in your client.
 
 ### Best Practices for Error Handling
 
-1. **Always validate inputs** before calling tools
-2. **Check permissions** - verify you have required role
-3. **Handle retries** - transient errors may resolve on retry
-4. **Log errors** - include context for troubleshooting
-5. **Check health status** - if errors persist, verify system health
+1. **Check permissions first**: Verify you have required permissions before calling write operations
+2. **Validate inputs**: Ensure all required parameters are provided and correctly formatted
+3. **Handle not found**: Check if entities exist before updating
+4. **Monitor health**: Use `babtec_health_check` to verify server status
+5. **Review audit logs**: Check audit logs if operations fail unexpectedly
 
 ## Best Practices
 
+### General Guidelines
+
+1. **Use pagination**: Always specify `limit` and use `offset` for large result sets
+2. **Filter effectively**: Use search filters to reduce result sets
+3. **Check before write**: Read entities before updating to understand current state
+4. **Provide context**: Include comments and descriptions in write operations
+5. **Monitor health**: Regularly check server health status
+
 ### Security
 
-- **Never share credentials** - use environment variables or secure configuration
-- **Use least privilege** - request only the roles you need
-- **Review audit logs** - regularly check for unauthorized access
-- **Rotate credentials** - change passwords/tokens regularly
+1. **Never log credentials**: Credentials are handled by the server
+2. **Respect permissions**: Only attempt operations you're authorized for
+3. **Audit awareness**: All write operations are logged
+4. **Error messages**: Don't expose sensitive data in error handling
 
 ### Performance
 
-- **Use pagination** - set appropriate `limit` values (20-50 is optimal)
-- **Filter early** - use search filters to reduce result sets
-- **Cache results** - store frequently accessed data locally
-- **Batch operations** - group related operations when possible
+1. **Batch operations**: When possible, process multiple items in sequence
+2. **Cache results**: Cache read results when appropriate
+3. **Limit result sets**: Use appropriate `limit` values
+4. **Filter early**: Apply filters in search operations
 
 ### Data Quality
 
-- **Validate before write** - ensure data is correct before submitting
-- **Use consistent formats** - follow ISO 8601 for dates, standard formats for IDs
-- **Include context** - add comments and descriptions to explain changes
-- **Link related entities** - use `relatedEntityType` and `relatedEntityId` when creating actions
-
-### Compliance
-
-- **All write operations are logged** - audit trail is automatic
-- **Review audit logs** - regularly check for compliance issues
-- **Document changes** - include clear descriptions in updates
-- **Follow 8D process** - complete all steps in order for complaints
-
-### Troubleshooting
-
-1. **Check health status** first: `babtec_health_check`
-2. **Verify permissions** - ensure you have required role
-3. **Check error messages** - they often indicate the specific issue
-4. **Review audit logs** - see what operations succeeded/failed
-5. **Contact administrator** - for persistent issues or permission problems
-
-## Additional Resources
-
-- **API Reference:** See `docs/API.md` for detailed tool specifications
-- **Configuration Guide:** See `docs/ADMINISTRATOR-MANUAL.md` for setup
-- **Troubleshooting:** See `docs/TROUBLESHOOTING.md` for common issues
-- **Architecture:** See `docs/ARCHITECTURE.md` for system design
-
-## Support
-
-For issues or questions:
-1. Check this manual and troubleshooting guide
-2. Review audit logs for error context
-3. Contact your system administrator
-4. Refer to Babtec system documentation
+1. **Validate before write**: Ensure data quality before write operations
+2. **Complete information**: Provide all required fields
+3. **Consistent formats**: Use consistent date formats (ISO 8601)
+4. **Meaningful descriptions**: Include clear descriptions in write operations
 
 ---
 
-**Document Version:** 1.0.0  
-**Last Updated:** 2025-01-27
+**Need Help?** See the [Troubleshooting Guide](TROUBLESHOOTING.md) or [Administrator Manual](ADMINISTRATOR-MANUAL.md) for more information.
