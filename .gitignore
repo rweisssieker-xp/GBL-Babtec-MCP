@@ -17,3 +17,5 @@ coverage/
 audit-logs/
 config/local.yaml
 
+# Ignore all hidden folders (starting with .)
+.**/
